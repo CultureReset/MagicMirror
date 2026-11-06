@@ -1,0 +1,17 @@
+{
+	"name": "mmm-jarvis-display",
+	"version": "0.1.0",
+	"description": "Draft MagicMirror² module: read-only MQTT subscriber for proposed Jarvis/GCR display payloads.",
+	"license": "MIT",
+	"private": true,
+	"main": "MMM-JarvisDisplay.js",
+	"scripts": {
+		"test": "echo \"Run repo vitest: npx vitest run tests/unit/modules/MMM-JarvisDisplay\""
+	},
+	"dependencies": {
+		"mqtt": "^5.14.1"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}

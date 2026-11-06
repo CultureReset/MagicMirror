@@ -54,8 +54,13 @@ Temporary Items
 .directory
 .Trash-*
 
-# Ignore all modules
+# Ignore all modules by default (third-party installs).
+# Allow the draft GCR Jarvis display module and the placeholder keep-file.
 /modules/*
+!/modules/.gitkeep
+!/modules/MMM-JarvisDisplay/
+!/modules/MMM-JarvisDisplay/**
+/modules/MMM-JarvisDisplay/node_modules/
 
 # Ignore users config files but keep the samples.
 config/*
