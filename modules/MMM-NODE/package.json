@@ -1,8 +1,8 @@
 {
   "name": "mmm-node",
-  "version": "1.0.0",
-  "description": "MagicMirror² module that polls the NODE daemon and shows agents, alerts, and system vitals.",
-  "keywords": ["MagicMirror", "NODE", "dashboard"],
+  "version": "1.1.0",
+  "description": "MagicMirror² family-hub cards for the NODE display: agents, automations, approvals, alerts, and household sections.",
+  "keywords": ["MagicMirror", "NODE", "dashboard", "family-hub"],
   "license": "MIT",
   "main": "MMM-NODE.js"
 }

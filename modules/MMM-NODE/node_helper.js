@@ -13,8 +13,24 @@ const DEFAULT_ENDPOINTS = {
 	services: "/api/services",
 	disk: "/api/files/disk",
 	weather: "/api/weather",
-	health: "/api/health"
+	health: "/api/health",
+	automations: "/api/automations",
+	worlds: "/api/worlds",
+	control: "/api/control",
+	jobs: "/api/jobs",
+	approvals: "/api/approvals"
 };
+
+const PRODUCT_AGENTS = [
+	{ match: /openjarvis/i, label: "OpenJarvis" },
+	{ match: /paperclip/i, label: "Paperclip" },
+	{ match: /node \(this app\)|^node$/i, label: "NODE" },
+	{ match: /\bn8n\b/i, label: "n8n" },
+	{ match: /twenty/i, label: "Twenty CRM" },
+	{ match: /navidrome/i, label: "Navidrome" },
+	{ match: /open webui/i, label: "Open WebUI" },
+	{ match: /node-chat/i, label: "node-chat" }
+];
 
 function trimSlash (url) {
 	return String(url || "").replace(/\/+$/, "");
@@ -24,6 +40,10 @@ function joinUrl (base, path) {
 	if (!path) return base;
 	if (/^https?:\/\//i.test(path)) return path;
 	return `${trimSlash(base)}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function isOn (value) {
+	return /^(1|true|yes|on)$/i.test(String(value ?? "").trim());
 }
 
 async function fetchJson (url, timeoutMs = 8000) {
@@ -67,20 +87,50 @@ function icsDate (iso, allDay) {
 	return { key: "DATE-TIME", value: stamp };
 }
 
-function toIcs (events) {
+function pad (n) {
+	return String(n).padStart(2, "0");
+}
+
+function floatingStamp (date) {
+	return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`;
+}
+
+function startOfLocalDay (date) {
+	const d = new Date(date);
+	d.setHours(0, 0, 0, 0);
+	return d;
+}
+
+function mondayOf (date) {
+	const d = startOfLocalDay(date);
+	const day = d.getDay();
+	const diff = day === 0 ? -6 : 1 - day;
+	d.setDate(d.getDate() + diff);
+	return d;
+}
+
+function toIcs (events, calName = "NODE") {
 	const lines = [
 		"BEGIN:VCALENDAR",
 		"VERSION:2.0",
 		"PRODID:-//NODE//MMM-NODE//EN",
 		"CALSCALE:GREGORIAN",
-		"X-WR-CALNAME:NODE"
+		`X-WR-CALNAME:${icsEscape(calName)}`
 	];
 	const list = Array.isArray(events) ? events : [];
 	const now = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 	for (const ev of list) {
-		if (!ev || !ev.start) continue;
-		const start = icsDate(ev.start, Boolean(ev.allDay));
-		const end = icsDate(ev.end || ev.start, Boolean(ev.allDay));
+		if (!ev || ev.start == null) continue;
+		const floating = ev.floating && ev.start instanceof Date;
+		let start;
+		let end;
+		if (floating) {
+			start = { key: "DATE-TIME", value: floatingStamp(ev.start), floating: true };
+			end = ev.end instanceof Date ? { key: "DATE-TIME", value: floatingStamp(ev.end), floating: true } : null;
+		} else {
+			start = icsDate(ev.start, Boolean(ev.allDay));
+			end = icsDate(ev.end || ev.start, Boolean(ev.allDay));
+		}
 		if (!start) continue;
 		lines.push("BEGIN:VEVENT");
 		lines.push(`UID:${icsEscape(ev.id || `${ev.start}-${ev.title || "event"}`)}@node`);
@@ -94,6 +144,36 @@ function toIcs (events) {
 	}
 	lines.push("END:VCALENDAR");
 	return `${lines.join("\r\n")}\r\n`;
+}
+
+function buildDemoEvents () {
+	const monday = mondayOf(new Date());
+	const make = (id, title, week, day, hour, minute, durationMin) => {
+		const start = new Date(monday);
+		start.setDate(start.getDate() + week * 7 + day);
+		start.setHours(hour, minute, 0, 0);
+		const end = new Date(start.getTime() + durationMin * 60000);
+		return { id, title, start, end, floating: true };
+	};
+	return {
+		school: [
+			make("demo-school-drop-0", "Demo: School drop-off", 0, 0, 8, 0, 30),
+			make("demo-school-practice", "Demo: Team practice", 0, 1, 16, 0, 90),
+			make("demo-school-drop-1", "Demo: School drop-off", 1, 0, 8, 0, 30)
+		],
+		family: [
+			make("demo-family-movie", "Demo: Family movie night", 0, 3, 18, 0, 120),
+			make("demo-family-market", "Demo: Farmers market", 0, 5, 10, 0, 90)
+		],
+		work: [
+			make("demo-work-stand", "Demo: Team standup", 0, 2, 12, 0, 30),
+			make("demo-work-dentist", "Demo: Dentist", 0, 4, 9, 0, 60)
+		],
+		meals: [
+			make("demo-meal-tacos", "Demo: Dinner — tacos", 0, 0, 18, 30, 60),
+			make("demo-meal-pasta", "Demo: Dinner — pasta", 0, 2, 18, 30, 60)
+		]
+	};
 }
 
 function webAppsFrom (catalog, apps) {
@@ -137,22 +217,120 @@ function pickAlerts (alertsRes, notesRes) {
 	return [];
 }
 
+function groupAlerts (items) {
+	const map = new Map();
+	for (const item of items) {
+		const title = item.title || item.summary || item.name || "Alert";
+		const app = item.app || item.source || "";
+		const key = `${app}::${title}`;
+		const at = item.at || item.time || item.createdAt || item.date || null;
+		const prev = map.get(key);
+		if (!prev) {
+			map.set(key, { id: item.id || key, app, title, at, read: Boolean(item.read), count: 1 });
+		} else {
+			prev.count += 1;
+			if (at && (!prev.at || String(at) > String(prev.at))) prev.at = at;
+		}
+	}
+	return [...map.values()].sort((a, b) => String(b.at || "").localeCompare(String(a.at || "")));
+}
+
+function productAgents (control) {
+	const list = Array.isArray(control) ? control : control?.items || [];
+	const found = [];
+	for (const rule of PRODUCT_AGENTS) {
+		const hit = list.find((item) => rule.match.test(String(item?.name || item?.id || "")));
+		if (!hit) continue;
+		const state = String(hit.status || hit.state || "").toLowerCase();
+		const running = state.includes("run") || hit.running === true;
+		found.push({
+			id: hit.id || rule.label,
+			name: rule.label,
+			running,
+			status: running ? "ready" : (state || "stopped")
+		});
+	}
+	return found;
+}
+
+function worldsFrom (payload) {
+	const list = Array.isArray(payload) ? payload : payload?.worlds;
+	if (!Array.isArray(list)) return { active: null, items: [] };
+	const active = typeof payload?.active === "string" ? payload.active : payload?.active?.id || null;
+	return {
+		active,
+		items: list.map((world) => ({
+			id: world.id,
+			name: world.name || world.title || world.label || world.id
+		}))
+	};
+}
+
+function automationsFrom (payload) {
+	const items = Array.isArray(payload) ? payload : payload?.items || payload?.running || [];
+	const templates = Array.isArray(payload?.templates) ? payload.templates : [];
+	const running = items.filter((item) => {
+		const state = String(item?.status || item?.state || "").toLowerCase();
+		return item?.running === true || state.includes("run") || state.includes("active");
+	});
+	return {
+		running: running.map((item) => ({ id: item.id, name: item.name || item.title || item.id })),
+		items: items.map((item) => ({ id: item.id, name: item.name || item.title || item.id, status: item.status || item.state || null })),
+		templates: templates.map((item) => ({
+			id: item.id || item.slug || item.name,
+			name: item.name || item.title || item.id
+		})).filter((item) => item.name)
+	};
+}
+
+function healthLine (status, disk, services) {
+	const parts = [];
+	if (services && typeof services.total === "number") {
+		if (services.failed) parts.push(`${services.failed} need attention`);
+		else parts.push(`${services.running} services up`);
+	}
+	const total = Number(disk?.total);
+	const used = Number(disk?.used);
+	if (total) parts.push(`disk ${Math.round((used / total) * 100)}%`);
+	const up = Number(status?.uptimeSeconds);
+	if (Number.isFinite(up) && up >= 0) {
+		const d = Math.floor(up / 86400);
+		const h = Math.floor((up % 86400) / 3600);
+		parts.push(d ? `up ${d}d ${h}h` : `up ${h}h`);
+	}
+	const ok = !services || !services.failed;
+	return { ok, line: parts.join(" · ") || "NODE connected" };
+}
+
 module.exports = NodeHelper.create({
 	started: false,
 	timer: null,
 	latestIcs: toIcs([]),
+	demoIcs: {},
 	lastPayload: null,
 	config: {},
 
 	start () {
 		this.started = true;
-		const config = this.getServerModuleConfig();
-		this.config = config || {};
+		try {
+			if (typeof this.getServerModuleConfig === "function") {
+				this.config = this.getServerModuleConfig() || this.config || {};
+			}
+		} catch {
+			this.config = this.config || {};
+		}
 		if (this.expressApp) {
 			this.expressApp.get("/mmm-node/calendar.ics", (req, res) => {
 				res.setHeader("Content-Type", "text/calendar; charset=utf-8");
 				res.setHeader("Cache-Control", "no-store");
 				res.send(this.latestIcs || toIcs([]));
+			});
+			this.expressApp.get("/mmm-node/demo/:slug.ics", (req, res) => {
+				const slug = String(req.params.slug || "").toLowerCase();
+				const body = this.demoIcs[slug] || toIcs([], `Demo ${slug}`);
+				res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+				res.setHeader("Cache-Control", "no-store");
+				res.send(body);
 			});
 			this.expressApp.get("/mmm-node/data.json", (req, res) => {
 				res.setHeader("Cache-Control", "no-store");
@@ -161,6 +339,7 @@ module.exports = NodeHelper.create({
 		} else {
 			Log.warn("MMM-NODE: expressApp not ready; ICS/data routes not registered");
 		}
+		this.refreshDemoIcs();
 		this.poll();
 	},
 
@@ -171,10 +350,20 @@ module.exports = NodeHelper.create({
 		}
 	},
 
+	refreshDemoIcs () {
+		const grouped = buildDemoEvents();
+		this.demoIcs = {};
+		for (const [slug, events] of Object.entries(grouped)) {
+			const name = `Demo ${slug.charAt(0).toUpperCase()}${slug.slice(1)}`;
+			this.demoIcs[slug] = toIcs(events, name);
+		}
+	},
+
 	socketNotificationReceived (notification, payload) {
 		if (notification === "MMM_NODE_START") {
 			this.config = { ...this.config, ...(payload || {}) };
 			if (this.lastPayload) this.sendSocketNotification("MMM_NODE_DATA", this.lastPayload);
+			this.refreshDemoIcs();
 			this.poll();
 		}
 	},
@@ -191,10 +380,14 @@ module.exports = NodeHelper.create({
 		const now = new Date();
 		const from = new Date(now.getTime() - 7 * 864e5).toISOString();
 		const to = new Date(now.getTime() + 62 * 864e5).toISOString();
+		this.refreshDemoIcs();
 
 		try {
 			const calendarUrl = `${joinUrl(nodeUrl, endpoints.calendar)}?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
-			const [status, system, agents, apps, webapps, alerts, notifications, calendar, services, disk, weather, health] = await Promise.all([
+			const [
+				status, system, agents, apps, webapps, alerts, notifications,
+				calendar, services, disk, weather, health, automations, worlds, control, jobs, approvals
+			] = await Promise.all([
 				fetchJson(joinUrl(nodeUrl, endpoints.status)),
 				fetchJson(joinUrl(nodeUrl, endpoints.system)),
 				fetchJson(joinUrl(nodeUrl, endpoints.agents)),
@@ -206,31 +399,43 @@ module.exports = NodeHelper.create({
 				fetchJson(joinUrl(nodeUrl, endpoints.services)),
 				fetchJson(joinUrl(nodeUrl, endpoints.disk)),
 				fetchJson(joinUrl(nodeUrl, endpoints.weather)),
-				fetchJson(joinUrl(nodeUrl, endpoints.health))
+				fetchJson(joinUrl(nodeUrl, endpoints.health)),
+				fetchJson(joinUrl(nodeUrl, endpoints.automations)),
+				fetchJson(joinUrl(nodeUrl, endpoints.worlds)),
+				fetchJson(joinUrl(nodeUrl, endpoints.control)),
+				fetchJson(joinUrl(nodeUrl, endpoints.jobs)),
+				fetchJson(joinUrl(nodeUrl, endpoints.approvals))
 			]);
 
-			const events = calendar.ok && Array.isArray(calendar.data) ? calendar.data : (calendar.ok && Array.isArray(calendar.data?.events) ? calendar.data.events : []);
+			const events = calendar.ok && Array.isArray(calendar.data)
+				? calendar.data
+				: (calendar.ok && Array.isArray(calendar.data?.events) ? calendar.data.events : []);
 			this.latestIcs = toIcs(events);
 
+			const servicesSummary = services.ok ? summarizeServices(services.data) : null;
+			const diskData = disk.ok ? disk.data : null;
+			const statusData = status.ok ? status.data : null;
+			const rawAlerts = pickAlerts(alerts, notifications);
+			const approvalItems = approvals.ok
+				? (Array.isArray(approvals.data) ? approvals.data : approvals.data?.items || approvals.data?.approvals || [])
+				: [];
+
 			const payload = {
-				ok: Boolean(status.ok || system.ok),
+				ok: Boolean(status.ok || system.ok || control.ok || automations.ok),
 				fetchedAt: now.toISOString(),
 				nodeUrl,
-				status: status.ok ? status.data : null,
-				system: system.ok ? system.data : null,
-				agents: agents.ok ? agents.data : null,
+				status: statusData,
+				health: healthLine(statusData, diskData, servicesSummary),
+				productAgents: control.ok ? productAgents(control.data) : [],
+				personas: Array.isArray(agents.data?.personas) ? agents.data.personas.length : 0,
 				apps: webAppsFrom(webapps.ok ? webapps.data : null, apps.ok ? apps.data : null).map((app) => ({
 					id: app.id || app.slug,
 					name: app.name || app.title || app.slug || app.id,
-					category: app.category || null
+					category: app.category || app.kind || null
 				})),
-				alerts: pickAlerts(alerts, notifications).slice(0, 12).map((item) => ({
-					id: item.id,
-					app: item.app || item.source || "",
-					title: item.title || item.summary || item.name || "Alert",
-					at: item.at || item.time || item.createdAt || item.date || null,
-					read: Boolean(item.read)
-				})),
+				alerts: groupAlerts(rawAlerts).slice(0, 8),
+				alertCount: rawAlerts.length,
+				alertsSource: alerts?.ok ? "alerts" : (notifications?.ok ? "notifications" : null),
 				calendar: events.map((ev) => ({
 					id: ev.id,
 					title: ev.title,
@@ -238,11 +443,23 @@ module.exports = NodeHelper.create({
 					end: ev.end,
 					allDay: Boolean(ev.allDay)
 				})),
-				services: services.ok ? summarizeServices(services.data) : null,
-				disk: disk.ok ? disk.data : null,
-				weather: weather.ok ? { location: weather.data?.location, tempC: weather.data?.tempC, tempF: weather.data?.tempF, summary: weather.data?.summary } : null,
-				health: health.ok ? health.data : null,
-				alertsSource: alerts?.ok ? "alerts" : (notifications?.ok ? "notifications" : null)
+				services: servicesSummary,
+				automations: automations.ok ? automationsFrom(automations.data) : { running: [], items: [], templates: [] },
+				worlds: worlds.ok ? worldsFrom(worlds.data) : { active: null, items: [] },
+				approvals: approvalItems.map((item) => ({
+					id: item.id,
+					title: item.title || item.name || item.summary || "Approval",
+					from: item.from || item.requester || item.app || null
+				})),
+				approvalsSource: approvals.ok ? "approvals" : null,
+				jobs: jobs.ok && Array.isArray(jobs.data) ? jobs.data.length : 0,
+				chores: [],
+				meals: [],
+				shopping: [],
+				pantry: [],
+				rewards: [],
+				photos: [],
+				demoCalendar: isOn(this.config.demoCalendar) || isOn(process.env.NODE_DEMO_CALENDAR)
 			};
 
 			this.lastPayload = payload;

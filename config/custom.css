@@ -1,76 +1,163 @@
-/* Fluid NODE display. Scales with the viewport from 720p to 4K.
- * Nothing here is tied to a particular monitor size or machine.
- *
- * MagicMirror regions are absolutely positioned by default, which stacks a tall
- * calendar under the clock/weather and lets a long NODE module grow over the
- * month grid. Use a column flex layout instead, and stretch the month weeks
- * to fill the center.
+/* NODE family hub. Fluid from 720p to a 100-inch 4K panel.
+ * Official MagicMirror regions are remapped to a glanceable grid:
+ * weather + clock on the top, a large calendar as the hero,
+ * Today / Meals / Chores in a right stack, Approvals / Agents / System
+ * as short status lines on the bottom, photos as an idle cover.
+ * No hardcoded screen size, host, or path.
  */
+
 :root {
-  --font-size: clamp(13px, 0.9vw + 0.35vh, 28px);
+  --font-size: clamp(15px, 1.05vw + 0.45vh, 42px);
   --font-size-xsmall: 0.72rem;
-  --font-size-small: 0.9rem;
-  --font-size-medium: clamp(1.15rem, 1.6vw, 2.1rem);
-  --font-size-large: clamp(2.1rem, 4.2vw, 5.2rem);
-  --font-size-xlarge: clamp(2.6rem, 5vw, 6.2rem);
-  --gap-body-top: clamp(12px, 2.2vmin, 48px);
-  --gap-body-right: clamp(12px, 2.2vmin, 48px);
-  --gap-body-bottom: clamp(12px, 2.2vmin, 48px);
-  --gap-body-left: clamp(12px, 2.2vmin, 48px);
-  --gap-modules: clamp(8px, 1.4vmin, 24px);
+  --font-size-small: 0.95rem;
+  --font-size-medium: clamp(1.2rem, 1.8vw, 3rem);
+  --font-size-large: clamp(2.6rem, 5.6vw, 9rem);
+  --font-size-xlarge: clamp(3rem, 6.4vw, 10rem);
+  --gap-body-top: clamp(10px, 1.6vmin, 48px);
+  --gap-body-right: clamp(10px, 1.6vmin, 48px);
+  --gap-body-bottom: clamp(10px, 1.6vmin, 48px);
+  --gap-body-left: clamp(10px, 1.6vmin, 48px);
+  --gap-modules: clamp(8px, 1.1vmin, 24px);
+  --node-wallpaper: url("/modules/MMM-NODE/assets/wallpaper.jpg");
+  --node-overlay: linear-gradient(180deg, rgba(7, 9, 12, 0.46) 0%, rgba(7, 9, 12, 0.78) 100%);
+  --node-card-bg: rgba(12, 15, 20, 0.72);
+  --node-card-border: rgba(255, 255, 255, 0.12);
+  --node-card-radius: clamp(12px, 1.5vmin, 28px);
+  --node-card-pad: clamp(10px, 1.3vmin, 28px);
+  --node-gap: clamp(8px, 1.15vmin, 20px);
+}
+
+html,
+body {
+  background: #07090c;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--node-overlay), var(--node-wallpaper);
+  background-size: cover, cover;
+  background-position: center, center;
+  pointer-events: none;
+}
+
+body.mmm-node-no-wallpaper::before {
+  background-image: var(--node-overlay), radial-gradient(1200px 700px at 15% 0%, rgba(90, 70, 40, 0.35), transparent 60%);
+}
+
+#ui,
+.region {
+  z-index: 1;
 }
 
 body {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(6px, 1vmin, 16px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.38fr) minmax(17rem, 0.7fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "hero   hero"
+    "cal    stack"
+    "status status";
+  gap: var(--node-gap);
+  height: 100%;
 }
 
 .region.top.bar,
 .region.middle.center,
-.region.bottom.bar {
+.region.lower.third,
+.region.bottom.bar,
+.region.bottom.left,
+.region.bottom.center,
+.region.bottom.right,
+.region.top.left,
+.region.top.right,
+.region.top.center {
   position: relative;
   top: auto;
   right: auto;
   bottom: auto;
   left: auto;
-  width: 100%;
-  transform: none;
+  width: auto;
+  max-width: none;
   max-height: none;
+  transform: none;
 }
 
 .region.top.bar {
-  flex: 0 0 auto;
+  grid-area: hero;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   text-align: initial;
+  width: 100%;
+  z-index: 6;
 }
 
 .region.top.left,
 .region.top.right,
 .region.top.center {
   position: relative;
-  top: auto;
-  left: auto;
-  right: auto;
-  transform: none;
 }
 
 .region.top.center:has(.container:empty),
 .region.upper.third,
-.region.lower.third,
-.region.fullscreen,
-.region.bottom.center {
+.region.fullscreen.above {
   display: none;
 }
 
 .region.middle.center {
-  flex: 1 1 auto;
+  grid-area: cal;
   min-height: 0;
   display: flex;
   text-align: initial;
   overflow: hidden;
+}
+
+.region.lower.third {
+  grid-area: stack;
+  display: flex;
+  flex-direction: column;
+  gap: var(--node-gap);
+  min-height: 0;
+  overflow: hidden;
+  text-align: initial;
+}
+
+.region.lower.third .container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--node-gap);
+  height: 100%;
+  min-height: 0;
+}
+
+.region.bottom.bar {
+  grid-area: status;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: var(--node-gap);
+  width: 100%;
+  text-align: initial;
+}
+
+.region.bottom.left,
+.region.bottom.center,
+.region.bottom.right {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.region.fullscreen.below {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .region.middle.center .container,
@@ -83,14 +170,63 @@ body {
   min-height: 0;
 }
 
+.region.middle.center .module,
+.region.lower.third .module,
+.region.bottom.left .module,
+.region.bottom.center .module,
+.region.bottom.right .module {
+  background: var(--node-card-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--node-card-border);
+  border-radius: var(--node-card-radius);
+  padding: var(--node-card-pad);
+  box-sizing: border-box;
+}
+
+.region.middle.center .module,
+.region.lower.third .module {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.region.lower.third .module {
+  flex: 1 1 0;
+}
+
+.region.middle.center .module-header,
+.region.lower.third .module-header,
+.region.bottom.bar .module-header {
+  border: 0;
+  padding: 0 0 0.35em;
+  margin: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: clamp(0.72rem, 1.35vmin, 1.4rem);
+  color: rgba(255, 255, 255, 0.62);
+}
+
 .region.middle.center .CX3 {
   display: flex;
   flex-direction: column;
 }
 
 .region.middle.center .CX3 .headerTitle,
-.region.middle.center .CX3 .headerContainer {
+.region.middle.center .CX3 .headerContainer,
+.region.middle.center .CX3 .legend,
+.region.middle.center .CX3 .calendarLegend {
   flex: 0 0 auto;
+}
+
+.region.middle.center .CX3 .weeks,
+.region.middle.center .CX3 .weekBoard,
+.region.middle.center .CX3 .weeksContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .region.middle.center .CX3 .week {
@@ -105,51 +241,141 @@ body {
 }
 
 .CX3 {
-  --celllinecolor: #6a6a6a;
-  --cellheaderheight: clamp(22px, 4vmin, 96px);
-  --fontsize: clamp(13px, 2.1vmin, 42px);
+  --celllinecolor: rgba(255, 255, 255, 0.16);
+  --cellheaderheight: clamp(22px, 3.6vmin, 88px);
+  --fontsize: clamp(16px, 2.8vmin, 84px) !important;
+  --eventheight: clamp(26px, 3.8vmin, 96px) !important;
+}
+
+/* Agenda: official module caps width at 400px and fades the top of the list.
+ * Override so Today is readable from 720p to a 100-inch 4K panel. */
+.CX3A {
+  font-size: clamp(14px, 1.9vmin, 40px) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.CX3A .agenda {
+  max-height: none !important;
+  overflow: auto !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+}
+
+.CX3A .relativeDay,
+.CX3A .cellHeader {
+  font-size: 0.95em;
+}
+
+.CX3A .event,
+.CX3A .title,
+.CX3A .cellBody {
+  font-size: 1em;
+  line-height: 1.25;
+}
+
+.region.middle.center .CX3 .legend,
+.region.middle.center .CX3 .calendarLegend,
+.CX3 .legend,
+.CX3 .calendarLegend {
+  font-size: clamp(12px, 1.6vmin, 28px);
 }
 
 .region.middle.center .CX3 .headerTitle {
-  font-size: clamp(0.95rem, 2.4vmin, 2.8rem);
-  letter-spacing: 0.18em;
-  margin-bottom: 0.2em;
+  font-size: clamp(1rem, 2.6vmin, 3.2rem);
+  letter-spacing: 0.14em;
+  margin-bottom: 0.15em;
+  color: #fff;
 }
 
 .region.middle.center .CX3 .weekday {
-  font-size: clamp(0.8rem, 1.9vmin, 2rem) !important;
-  padding: 0.2em 0 0.35em;
+  font-size: clamp(0.8rem, 1.7vmin, 2.2rem) !important;
+  padding: 0.15em 0 0.3em;
+  opacity: 0.8;
 }
 
 .region.middle.center .CX3 .cellHeader,
 .region.middle.center .CX3 .cellDate {
-  font-size: clamp(0.85rem, 2.1vmin, 2.2rem) !important;
+  font-size: clamp(1rem, 2.3vmin, 2.6rem) !important;
+  font-weight: 600;
 }
 
-.region.bottom.bar {
-  flex: 0 0 auto;
+.clock {
+  text-align: right;
+}
+
+.clock .time {
+  letter-spacing: 0.02em;
+}
+
+.clock .date {
+  font-size: clamp(0.95rem, 2.1vmin, 2.4rem);
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.86);
+  margin-top: 0.1em;
+}
+
+.currentweather,
+.weather {
+  text-align: left;
+}
+
+.currentweather .weathericon,
+.weather .weathericon {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+
+.region.bottom.bar .mmm-node {
+  height: auto;
+}
+
+.region.bottom.bar .mmm-node-card {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  backdrop-filter: none;
+}
+
+/* Idle photo cover sits under the clock/weather, over the rest. */
+.mmm-node-idle {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: clamp(12px, 2vmin, 32px);
-  max-height: 34vh;
-  text-align: initial;
-  background: #000;
-  z-index: 5;
-  padding-top: 0.35rem;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: clamp(16px, 3vmin, 48px);
+  background:
+    linear-gradient(180deg, rgba(7, 9, 12, 0.15) 0%, rgba(7, 9, 12, 0.55) 100%),
+    var(--node-wallpaper) center / cover no-repeat;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
 }
 
-.region.bottom.left,
-.region.bottom.right {
-  position: relative;
-  bottom: auto;
-  width: auto;
-  max-width: calc(50% - 8px);
-  max-height: 34vh;
-  overflow: auto;
-  transform: none;
+.mmm-node-idle.is-on {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-.mmm-node {
-  width: min(36rem, 100%);
+.mmm-node-idle__label {
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: clamp(0.8rem, 1.5vmin, 1.4rem);
+}
+
+@media (max-width: 900px) {
+  body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(16rem, 1fr) auto auto;
+    grid-template-areas:
+      "hero"
+      "cal"
+      "stack"
+      "status";
+  }
 }

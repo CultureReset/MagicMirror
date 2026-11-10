@@ -1,69 +1,168 @@
+/* Separated family-hub cards. Typography is sized for glancing from a room away. */
+
 .mmm-node {
-  width: min(48rem, 100%);
-  max-width: 100%;
+  width: 100%;
+  height: 100%;
   text-align: left;
-  font-size: clamp(0.64rem, 0.78vw, 1rem);
-  line-height: 1.3;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 1.1rem;
-  row-gap: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: clamp(6px, 0.9vmin, 12px);
 }
 
-.mmm-node__block:nth-child(n+3) {
-  grid-column: 1 / -1;
+.mmm-node__health {
+  flex: 0 0 auto;
+  font-size: clamp(0.85rem, 1.6vmin, 1.35rem);
+  letter-spacing: 0.04em;
+  padding: 0.25em 0.1em 0;
+  color: rgba(255, 255, 255, 0.86);
 }
 
-.mmm-node__block + .mmm-node__block {
-  margin-top: clamp(0.55rem, 1.1vmin, 1.1rem);
+.mmm-node__health.is-ok::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  background: #7ddea5;
+  box-shadow: 0 0 8px rgba(125, 222, 165, 0.7);
 }
 
-.mmm-node__h {
-  color: var(--color-text-bright);
-  font-weight: 700;
-  letter-spacing: 0.12em;
+.mmm-node__health.is-warn::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  background: #f0c36a;
+}
+
+.mmm-node__demo {
+  flex: 0 0 auto;
+  font-size: clamp(0.68rem, 1.2vmin, 0.95rem);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: 0.72em;
+  color: #e8a13a;
+}
+
+.mmm-node__grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11.2rem), 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(8px, 1.15vmin, 16px);
+}
+
+.mmm-node-card {
+  background: rgba(12, 15, 20, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: clamp(12px, 1.4vmin, 20px);
+  padding: clamp(8px, 1.15vmin, 16px) clamp(10px, 1.25vmin, 18px);
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.mmm-node-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6em;
   margin-bottom: 0.35em;
+}
+
+.mmm-node-card__title {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: clamp(0.68rem, 1.25vmin, 1.05rem);
+}
+
+.mmm-node-card__status,
+.mmm-node__muted,
+.is-off {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 0.92em;
+}
+
+.mmm-node-card__status {
+  white-space: nowrap;
+  font-size: clamp(0.64rem, 1.15vmin, 0.95rem);
+}
+
+.mmm-node__list,
+.mmm-node__empty,
+.mmm-node__chips,
+.mmm-node__avatars {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mmm-node__empty {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: clamp(0.9rem, 1.7vmin, 1.35rem);
+  line-height: 1.25;
 }
 
 .mmm-node__row,
 .mmm-node__alert {
   display: flex;
   justify-content: space-between;
-  gap: 0.75em;
+  align-items: baseline;
+  gap: 0.6em;
   padding: 0.12em 0;
+  font-size: clamp(0.86rem, 1.55vmin, 1.25rem);
 }
 
 .mmm-node__alert {
   display: block;
+  padding: 0.08em 0 0.2em;
 }
 
-.mmm-node__k {
-  color: var(--color-text-dimmed);
+.mmm-node__k,
+.mmm-node__alert-title,
+.mmm-node__v {
+  color: #fff;
 }
 
 .mmm-node__v,
-.mmm-node__alert-title {
-  color: var(--color-text-bright);
+.mmm-node__tap {
   text-align: right;
+  flex: 0 0 auto;
 }
 
-.mmm-node__alert-title {
-  text-align: left;
+.mmm-node__tap {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.08em 0.55em;
+  font-size: 0.78em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.mmm-node__muted,
-.is-off {
-  color: var(--color-text-dimmed);
-}
-
+.mmm-node__tap.is-on,
 .is-on {
   color: #7ddea5;
 }
 
+.mmm-node__tap.is-on {
+  border-color: rgba(125, 222, 165, 0.45);
+}
+
+.mmm-node__tap.is-off {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .mmm-node__status--down {
   color: #ff7b72;
+  font-size: 1.2em;
 }
 
 .mmm-node__chips {
@@ -73,9 +172,101 @@
 }
 
 .mmm-node__chip {
-  border: 1px solid #333;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
-  padding: 0.12em 0.55em;
-  color: var(--color-text-bright);
-  font-size: 0.86em;
+  padding: 0.15em 0.6em;
+  color: #fff;
+  font-size: clamp(0.78rem, 1.4vmin, 1.1rem);
+}
+
+.mmm-node__avatars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45em 0.7em;
+}
+
+.mmm-node__avatar {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  min-width: 0;
+}
+
+.mmm-node__glyph {
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(91, 156, 255, 0.28);
+  border: 1px solid rgba(91, 156, 255, 0.5);
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.mmm-node__avatar.is-active .mmm-node__glyph {
+  background: rgba(125, 222, 165, 0.3);
+  border-color: rgba(125, 222, 165, 0.7);
+}
+
+.mmm-node__avatar-name {
+  color: #fff;
+  font-size: clamp(0.78rem, 1.4vmin, 1.1rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.mmm-node__status-line,
+.mmm-node__next {
+  color: #fff;
+  font-size: clamp(1.05rem, 2.1vmin, 2.2rem);
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.mmm-node__next {
+  font-weight: 500;
+  margin: 0.15em 0 0.35em;
+}
+
+.mmm-node__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-top: 0.35em;
+}
+
+.mmm-node__action {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 0.18em 0.7em;
+  color: #fff;
+  letter-spacing: 0.04em;
+  font-size: clamp(0.72rem, 1.3vmin, 1.05rem);
+  white-space: nowrap;
+}
+
+.mmm-node__action:first-child {
+  border-color: rgba(125, 222, 165, 0.55);
+  color: #7ddea5;
+}
+
+.mmm-node__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(10px, 1.6vmin, 28px);
+  align-items: flex-end;
+}
+
+.mmm-node__metric-value {
+  color: #fff;
+  font-size: clamp(1.2rem, 2.4vmin, 2.6rem);
+  font-weight: 650;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
 }
