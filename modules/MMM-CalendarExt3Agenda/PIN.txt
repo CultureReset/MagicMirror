@@ -1,0 +1,5 @@
+source: https://github.com/MMRIZE/MMM-CalendarExt3Agenda
+tag: v2.0.5
+commit: 504b6c31befb79108eb96cf598e48eee1f101be2
+CX3_Shared: f99450d819875f9d403b9b239f10ca0e1344cf2e
+vendored into CultureReset/MagicMirror so a single clone works offline (no extra forks).

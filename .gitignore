@@ -55,17 +55,29 @@ Temporary Items
 .Trash-*
 
 # Ignore all modules by default (third-party installs).
-# Allow the draft GCR Jarvis display module and the placeholder keep-file.
+# Allow the draft GCR Jarvis display module, NODE display module,
+# and pinned calendar modules. Other third-party modules stay ignored.
 /modules/*
 !/modules/.gitkeep
 !/modules/MMM-JarvisDisplay/
 !/modules/MMM-JarvisDisplay/**
 /modules/MMM-JarvisDisplay/node_modules/
+!/modules/MMM-NODE/
+!/modules/MMM-NODE/**
+/modules/MMM-NODE/node_modules/
+!/modules/MMM-CalendarExt3/
+!/modules/MMM-CalendarExt3/**
+/modules/MMM-CalendarExt3/node_modules/
+!/modules/MMM-CalendarExt3Agenda/
+!/modules/MMM-CalendarExt3Agenda/**
+/modules/MMM-CalendarExt3Agenda/node_modules/
 
-# Ignore users config files but keep the samples.
+# Ignore local override configs; ship the portable env-driven defaults.
 config/*
 !config/config.js.sample
 !config/custom.css.sample
+!config/config.js
+!config/custom.css
 
 # Vim
 ## swap

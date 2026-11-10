@@ -1,0 +1,155 @@
+/* Fluid NODE display. Scales with the viewport from 720p to 4K.
+ * Nothing here is tied to a particular monitor size or machine.
+ *
+ * MagicMirror regions are absolutely positioned by default, which stacks a tall
+ * calendar under the clock/weather and lets a long NODE module grow over the
+ * month grid. Use a column flex layout instead, and stretch the month weeks
+ * to fill the center.
+ */
+:root {
+  --font-size: clamp(13px, 0.9vw + 0.35vh, 28px);
+  --font-size-xsmall: 0.72rem;
+  --font-size-small: 0.9rem;
+  --font-size-medium: clamp(1.15rem, 1.6vw, 2.1rem);
+  --font-size-large: clamp(2.1rem, 4.2vw, 5.2rem);
+  --font-size-xlarge: clamp(2.6rem, 5vw, 6.2rem);
+  --gap-body-top: clamp(12px, 2.2vmin, 48px);
+  --gap-body-right: clamp(12px, 2.2vmin, 48px);
+  --gap-body-bottom: clamp(12px, 2.2vmin, 48px);
+  --gap-body-left: clamp(12px, 2.2vmin, 48px);
+  --gap-modules: clamp(8px, 1.4vmin, 24px);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1vmin, 16px);
+}
+
+.region.top.bar,
+.region.middle.center,
+.region.bottom.bar {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: 100%;
+  transform: none;
+  max-height: none;
+}
+
+.region.top.bar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: initial;
+}
+
+.region.top.left,
+.region.top.right,
+.region.top.center {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  transform: none;
+}
+
+.region.top.center:has(.container:empty),
+.region.upper.third,
+.region.lower.third,
+.region.fullscreen,
+.region.bottom.center {
+  display: none;
+}
+
+.region.middle.center {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  text-align: initial;
+  overflow: hidden;
+}
+
+.region.middle.center .container,
+.region.middle.center .module,
+.region.middle.center .module-content,
+.region.middle.center .MMM-CalendarExt3,
+.region.middle.center .CX3 {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.region.middle.center .CX3 {
+  display: flex;
+  flex-direction: column;
+}
+
+.region.middle.center .CX3 .headerTitle,
+.region.middle.center .CX3 .headerContainer {
+  flex: 0 0 auto;
+}
+
+.region.middle.center .CX3 .week {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+}
+
+.region.middle.center .CX3 .cell,
+.region.middle.center .CX3 .cellContainer {
+  height: 100%;
+}
+
+.CX3 {
+  --celllinecolor: #6a6a6a;
+  --cellheaderheight: clamp(22px, 4vmin, 96px);
+  --fontsize: clamp(13px, 2.1vmin, 42px);
+}
+
+.region.middle.center .CX3 .headerTitle {
+  font-size: clamp(0.95rem, 2.4vmin, 2.8rem);
+  letter-spacing: 0.18em;
+  margin-bottom: 0.2em;
+}
+
+.region.middle.center .CX3 .weekday {
+  font-size: clamp(0.8rem, 1.9vmin, 2rem) !important;
+  padding: 0.2em 0 0.35em;
+}
+
+.region.middle.center .CX3 .cellHeader,
+.region.middle.center .CX3 .cellDate {
+  font-size: clamp(0.85rem, 2.1vmin, 2.2rem) !important;
+}
+
+.region.bottom.bar {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: clamp(12px, 2vmin, 32px);
+  max-height: 34vh;
+  text-align: initial;
+  background: #000;
+  z-index: 5;
+  padding-top: 0.35rem;
+}
+
+.region.bottom.left,
+.region.bottom.right {
+  position: relative;
+  bottom: auto;
+  width: auto;
+  max-width: calc(50% - 8px);
+  max-height: 34vh;
+  overflow: auto;
+  transform: none;
+}
+
+.mmm-node {
+  width: min(36rem, 100%);
+}

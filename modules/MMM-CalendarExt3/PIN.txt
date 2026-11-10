@@ -1,0 +1,5 @@
+source: https://github.com/MMRIZE/MMM-CalendarExt3
+tag: v2.3.3
+commit: a31239cbfb8add64699ae0ef131e83dfd9e3a127
+CX3_Shared: 79f9a8c71d2c861c1da6809bec6787199cc9ebfa
+vendored into CultureReset/MagicMirror so a single clone works offline (no extra forks).

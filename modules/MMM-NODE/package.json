@@ -1,0 +1,8 @@
+{
+  "name": "mmm-node",
+  "version": "1.0.0",
+  "description": "MagicMirror² module that polls the NODE daemon and shows agents, alerts, and system vitals.",
+  "keywords": ["MagicMirror", "NODE", "dashboard"],
+  "license": "MIT",
+  "main": "MMM-NODE.js"
+}
