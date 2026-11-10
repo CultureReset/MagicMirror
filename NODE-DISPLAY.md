@@ -11,8 +11,8 @@ Design follows the 9 November 2026 NODE UI/UX research: Skylight / Hearth / DAKb
 - **Top-left:** Weather (stock `weather` + `nodeos` provider, NODE `/api/weather`)
 - **Top-right:** Clock and date (stock `clock`)
 - **Hero, middle:** Two-week color-coded calendar (`MMM-CalendarExt3` v2.3.3) fed by a hidden stock `calendar` module from NODE `/api/calendar` via `/mmm-node/calendar.ics`
-- **Right stack (`lower_third`):** Today / upcoming (`MMM-CalendarExt3Agenda` v2.0.5), Meals, Chores
-- **Bottom status:** Approvals (count + next, with Approve / Reject / Request revision), Agents (one status line), System (3–5 numbers)
+- **Right stack (`lower_third`):** Today / upcoming (`MMM-CalendarExt3Agenda` v2.0.5), plus App Store apps selected for the `stack` slot (Meals and Chores when those apps are installed and switched on). If none are selected, this column hides and the calendar uses the full width.
+- **Bottom status:** App Store apps selected for the `status` slot (Approvals when that app is installed and switched on), plus optional built-in Agents and System chrome (`MM_SHOW_CORE`).
 - **Idle:** Photos / privacy cover on `fullscreen_below` after `MM_IDLE_MS` (default 120s; `0` disables). Clock and weather stay visible on top.
 
 ## Section catalog (module map)
@@ -22,9 +22,10 @@ Design follows the 9 November 2026 NODE UI/UX research: Skylight / Hearth / DAKb
 | `calendar` | Calendar | `MMM-CalendarExt3` + hidden `calendar` feeder | Phone/desktop views; optional extra ICS via `NODE_CALENDAR_ICS`. If NODE’s calendar is empty, set `NODE_DEMO_CALENDAR=1` for clearly labeled Demo events, or connect Google / Apple / Outlook / ICS. |
 | `clock` | Clock | stock `clock` | Phone header |
 | `weather` | Weather | stock `weather` + `nodeos` | Phone glance |
-| `meals` | Meals | `MMM-NODE` `kind: meals` | Phone editor. Future: `MMM-Tandoor`, `MMM-MealieMenu`, `MMM-AnyList`. Not paywalled. |
-| `chores` | Chores | `MMM-NODE` `kind: chores` | Phone checklist. Future: `MMM-FamilyChores`, `MMM-Chores`, `MMM-GoogleTasks`, `MMM-Todoist`. |
-| `approvals` | Approvals | `MMM-NODE` `kind: approvals` | Phone inbox with the same three actions. `/api/approvals` is not on the daemon yet, so the TV shows “None waiting.” |
+| `meals` | Meals | App Store app, board card when installed and selected | Phone editor. First-party module: `src/apps/meals`. Not paywalled. |
+| `chores` | Chores | App Store app, board card when installed and selected | Phone checklist. First-party module: `src/apps/chores`. |
+| `approvals` | Approvals | App Store app, board card when installed and selected | Phone inbox with Approve / Reject / Request revision. First-party module: `src/apps/approvals`. |
+| `alerts` | Alerts | App Store app, board card when installed and selected | First-party module: `src/apps/alerts`. Off the default board until selected. |
 | `agents` | Agents | `MMM-NODE` `kind: agents` | Desktop cockpit. TV uses human status (“3 agents OK”), never Codex / Crush lists. |
 | `system` | System | `MMM-NODE` `kind: system` | Desktop charts. TV: services, disk, uptime only. GPU/power are not in the daemon API. |
 | `photos` | Photos / privacy cover | `MMM-NODE` `kind: photos` on `fullscreen_below` | Phone album picker. Future: `MMM-Wallpaper`, `MMM-GooglePhotos`, `MMM-ImageSlideshow`. Not paywalled. |
@@ -42,9 +43,11 @@ Design follows the 9 November 2026 NODE UI/UX research: Skylight / Hearth / DAKb
 
 ```bash
 export NODE_URL=http://127.0.0.1:17770   # portable test-run default
+export NODE_APP_STORE_URL=http://127.0.0.1:17780
 export MM_PORT=18080
 # Optional, off by default. Adds clearly labeled "Demo:" events so the calendar is not an empty grid.
 # export NODE_DEMO_CALENDAR=1
+# Hide built-in Agents / System / Photos chrome: MM_SHOW_CORE=0
 ./start-node-display.sh
 ```
 

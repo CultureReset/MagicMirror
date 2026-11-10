@@ -376,6 +376,7 @@ module.exports = NodeHelper.create({
 
 	async poll () {
 		const nodeUrl = trimSlash(this.config.nodeUrl || process.env.NODE_URL || process.env.NODEOS_URL || "http://127.0.0.1:17770");
+		const appStoreUrl = trimSlash(this.config.appStoreUrl || process.env.NODE_APP_STORE_URL || "");
 		const endpoints = { ...DEFAULT_ENDPOINTS, ...(this.config.endpoints || {}) };
 		const now = new Date();
 		const from = new Date(now.getTime() - 7 * 864e5).toISOString();
@@ -386,7 +387,8 @@ module.exports = NodeHelper.create({
 			const calendarUrl = `${joinUrl(nodeUrl, endpoints.calendar)}?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 			const [
 				status, system, agents, apps, webapps, alerts, notifications,
-				calendar, services, disk, weather, health, automations, worlds, control, jobs, approvals
+				calendar, services, disk, weather, health, automations, worlds, control, jobs, approvals,
+				layout
 			] = await Promise.all([
 				fetchJson(joinUrl(nodeUrl, endpoints.status)),
 				fetchJson(joinUrl(nodeUrl, endpoints.system)),
@@ -404,7 +406,8 @@ module.exports = NodeHelper.create({
 				fetchJson(joinUrl(nodeUrl, endpoints.worlds)),
 				fetchJson(joinUrl(nodeUrl, endpoints.control)),
 				fetchJson(joinUrl(nodeUrl, endpoints.jobs)),
-				fetchJson(joinUrl(nodeUrl, endpoints.approvals))
+				fetchJson(joinUrl(nodeUrl, endpoints.approvals)),
+				appStoreUrl ? fetchJson(joinUrl(appStoreUrl, "/api/display/layout")) : Promise.resolve({ ok: false, data: null })
 			]);
 
 			const events = calendar.ok && Array.isArray(calendar.data)
@@ -421,7 +424,7 @@ module.exports = NodeHelper.create({
 				: [];
 
 			const payload = {
-				ok: Boolean(status.ok || system.ok || control.ok || automations.ok),
+				ok: Boolean(status.ok || system.ok || control.ok || automations.ok || layout.ok),
 				fetchedAt: now.toISOString(),
 				nodeUrl,
 				status: statusData,
@@ -459,6 +462,8 @@ module.exports = NodeHelper.create({
 				pantry: [],
 				rewards: [],
 				photos: [],
+				appStoreUrl,
+				displayCards: layout.ok && Array.isArray(layout.data?.items) ? layout.data.items : [],
 				demoCalendar: isOn(this.config.demoCalendar) || isOn(process.env.NODE_DEMO_CALENDAR)
 			};
 

@@ -16,6 +16,10 @@
  *   MM_FIRST_DAY          0 Sunday, 1 Monday; omit for locale default
  *   NODE_CALENDAR_ICS     optional extra ICS URLs, comma-separated
  *   NODE_DEMO_CALENDAR    1/true to add clearly labeled Demo events (off by default)
+ *   NODE_APP_STORE_URL    App Store service (catalog, install, display layout)
+ *   MM_SHOW_AGENDA        0/off to hide the Today agenda (default on)
+ *   MM_SHOW_CORE          comma list of built-in NODE chrome: agents,system,photos
+ *                         (default agents,system,photos). Empty or 0 hides them.
  *   MM_WALLPAPER          0/off to disable the wallpaper overlay
  *   MM_WALLPAPER_URL      override wallpaper (default module asset)
  *   MM_IDLE_MS            photo cover delay in ms (default 120000; 0 disables)
@@ -47,6 +51,7 @@ function isOff (name) {
 }
 
 const nodeUrl = String(env("NODE_URL", env("NODEOS_URL", "http://127.0.0.1:17770"))).replace(/\/+$/, "");
+const appStoreUrl = String(env("NODE_APP_STORE_URL", "")).replace(/\/+$/, "");
 const mmAddress = env("MM_ADDRESS", "127.0.0.1");
 const mmPort = Number(env("MM_PORT", env("MAGICMIRROR_PORT", "18080")));
 const mmIcsHost = env("MM_ICS_HOST", "127.0.0.1");
@@ -64,10 +69,20 @@ const idleMsRaw = env("MM_IDLE_MS", "120000");
 const idleMs = Number(idleMsRaw);
 const nodeBase = {
 	nodeUrl,
+	appStoreUrl,
 	updateInterval: 15 * 1000,
 	demoCalendar,
 	wallpaperUrl
 };
+
+const showAgenda = !isOff("MM_SHOW_AGENDA");
+const coreRaw = env("MM_SHOW_CORE", "agents,system,photos");
+const coreCards = isOff("MM_SHOW_CORE") || String(coreRaw).trim() === ""
+	? []
+	: String(coreRaw).split(",").map((part) => part.trim()).filter(Boolean);
+const showAgents = coreCards.includes("agents");
+const showSystem = coreCards.includes("system");
+const showPhotos = coreCards.includes("photos");
 
 const calendars = [
 	{
@@ -113,10 +128,11 @@ const calendarExtConfig = {
 	weeksInView: 2,
 	locale,
 	showWeekNumber: false,
-	fontSize: "20px",
-	eventHeight: "28px",
+	fontSize: "clamp(16px, 1.1vw + 0.4vh, 42px)",
+	eventHeight: "clamp(20px, 1vw + 0.65vh, 48px)",
 	calendarSet,
 	maxEventLines: 6,
+	dynamicWeekHeight: true,
 	displayLegend: true
 };
 if (firstDayOfWeek != null && !Number.isNaN(firstDayOfWeek)) {
@@ -185,54 +201,59 @@ const config = {
 			config: calendarExtConfig
 		},
 		{
-			module: "MMM-CalendarExt3Agenda",
-			position: "lower_third",
-			header: "Today",
-			config: agendaConfig
-		},
-		{
+			// Cards the App Store says to show in the right-hand stack (only installed + selected apps).
 			module: "MMM-NODE",
 			position: "lower_third",
-			header: "Meals",
-			config: { ...nodeBase, kind: "meals" }
+			classes: "mmm-node-board-slot",
+			config: { ...nodeBase, kind: "board", slot: "stack" }
 		},
 		{
-			module: "MMM-NODE",
-			position: "lower_third",
-			header: "Chores",
-			config: { ...nodeBase, kind: "chores" }
-		},
-		{
+			// Cards the App Store says to show in the status row.
 			module: "MMM-NODE",
 			position: "bottom_left",
-			header: "Approvals",
-			config: { ...nodeBase, kind: "approvals" }
-		},
-		{
-			module: "MMM-NODE",
-			position: "bottom_center",
-			header: "Agents",
-			config: { ...nodeBase, kind: "agents" }
-		},
-		{
-			module: "MMM-NODE",
-			position: "bottom_right",
-			header: "System",
-			config: { ...nodeBase, kind: "system" }
-		},
-		{
-			// Idle / privacy photo cover. Hidden until MM_IDLE_MS of no input (0 disables).
-			module: "MMM-NODE",
-			position: "fullscreen_below",
-			classes: "mmm-node-idle-slot",
-			config: {
-				...nodeBase,
-				kind: "photos",
-				idleMs: Number.isFinite(idleMs) ? idleMs : 120000
-			}
+			classes: "mmm-node-board-status",
+			config: { ...nodeBase, kind: "board", slot: "status" }
 		}
 	]
 };
+
+if (showAgenda) {
+	config.modules.splice(5, 0, {
+		module: "MMM-CalendarExt3Agenda",
+		position: "lower_third",
+		header: "Today",
+		config: agendaConfig
+	});
+}
+if (showAgents) {
+	config.modules.push({
+		module: "MMM-NODE",
+		position: "bottom_center",
+		header: "Agents",
+		config: { ...nodeBase, kind: "agents" }
+	});
+}
+if (showSystem) {
+	config.modules.push({
+		module: "MMM-NODE",
+		position: "bottom_right",
+		header: "System",
+		config: { ...nodeBase, kind: "system" }
+	});
+}
+if (showPhotos) {
+	config.modules.push({
+		// Idle / privacy photo cover. Hidden until MM_IDLE_MS of no input (0 disables).
+		module: "MMM-NODE",
+		position: "fullscreen_below",
+		classes: "mmm-node-idle-slot",
+		config: {
+			...nodeBase,
+			kind: "photos",
+			idleMs: Number.isFinite(idleMs) ? idleMs : 120000
+		}
+	});
+}
 
 if (typeof module !== "undefined") {
 	module.exports = config;

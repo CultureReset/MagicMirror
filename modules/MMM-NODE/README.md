@@ -4,7 +4,7 @@ MagicMirror² modules for the CultureReset NODE family-hub display.
 
 Each section is one module instance (`kind`). The default TV layout places them in official MagicMirror regions rather than dumping everything into one corner panel.
 
-The helper is shared: one poll of the NODE daemon (URL from `NODE_URL` / module config, never a baked-in hostname).
+The helper is shared: it polls the NODE daemon (`NODE_URL`) for calendar, weather, and built-in chrome, and the App Store (`NODE_APP_STORE_URL`) for which installed apps to show. Neither URL is a baked-in hostname.
 
 ## Kinds
 
@@ -12,9 +12,10 @@ The helper is shared: one poll of the NODE daemon (URL from `NODE_URL` / module 
 | --- | --- | --- | --- |
 | `agents` | Agents | Yes — one status line | `/api/control` product services (OpenJarvis, Paperclip, NODE, …). Not Codex / Crush / dev-tool lists. |
 | `system` | System | Yes — 3–5 large numbers | services + disk + uptime. No CPU model. GPU/power are not in the daemon API. |
-| `approvals` | Approvals | Yes — count + next item | `/api/approvals` when present. Actions: Approve, Reject, Request revision (displayed; the TV does not POST). |
-| `meals` | Meals | Yes | Empty until NODE has a meals API. Not subscription-gated. Future: `MMM-Tandoor`, `MMM-MealieMenu`, `MMM-AnyList`. |
-| `chores` | Chores | Yes | Empty until NODE has a chores API. Not subscription-gated. Future: `MMM-FamilyChores`, `MMM-Chores`. |
+| `board` | Selected installed apps | Yes — `slot: stack` and `slot: status` | Reads the App Store `GET /api/display/layout`. A card appears only when that app is installed and selected. |
+| `approvals` | Approvals (legacy single kind) | Prefer `board` | Same card if the Approvals app is installed and selected. Actions: Approve, Reject, Request revision (displayed; the TV does not POST). |
+| `meals` | Meals (legacy single kind) | Prefer `board` | Same card if the Meals app is installed and selected. |
+| `chores` | Chores (legacy single kind) | Prefer `board` | Same card if the Chores app is installed and selected. |
 | `photos` | Photos / privacy cover | Yes — `fullscreen_below` after `MM_IDLE_MS` | Wallpaper cover until a photo API exists. Future: `MMM-Wallpaper`, `MMM-GooglePhotos`. |
 | `workflows` | Workflows | Opt-in | `/api/automations` (running / next). Separate from chores. |
 | `activity` | Activity | Opt-in (not the TV hero) | `/api/alerts`, else `/api/notifications`, grouped by app + title. |

@@ -7,7 +7,7 @@
  */
 
 :root {
-  --font-size: clamp(15px, 1.05vw + 0.45vh, 42px);
+  --font-size: clamp(18px, 1.25vw + 0.7vh, 52px);
   --font-size-xsmall: 0.72rem;
   --font-size-small: 0.95rem;
   --font-size-medium: clamp(1.2rem, 1.8vw, 3rem);
@@ -55,7 +55,7 @@ body.mmm-node-no-wallpaper::before {
 body {
   display: grid;
   grid-template-columns: minmax(0, 1.38fr) minmax(17rem, 0.7fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) minmax(6.5rem, auto);
   grid-template-areas:
     "hero   hero"
     "cal    stack"
@@ -242,10 +242,100 @@ body {
 
 .CX3 {
   --celllinecolor: rgba(255, 255, 255, 0.16);
-  --cellheaderheight: clamp(22px, 3.6vmin, 88px);
+  --cellheaderheight: clamp(40px, 2.4vw + 1.4vh, 120px) !important;
   --fontsize: clamp(16px, 2.8vmin, 84px) !important;
-  --eventheight: clamp(26px, 3.8vmin, 96px) !important;
+  --eventheight: clamp(22px, 1vw + 0.65vh, 48px) !important;
+  --eventrowheight: clamp(68px, 3.2vw + 2vh, 120px);
 }
+
+/* Pin event rows under the date header, not to the bottom of a stretched week. */
+.region.middle.center .CX3 .eventContainer,
+.CX3 .eventContainer {
+  top: var(--cellheaderheight) !important;
+  bottom: auto !important;
+}
+
+/* Event titles wrap up to two lines under the time, then clamp.
+ * Events stay at the top of the day cell; they must not stretch with the week. */
+.region.middle.center .CX3 .event,
+.CX3 .event {
+  white-space: normal !important;
+  text-overflow: unset !important;
+  overflow: hidden !important;
+  align-items: flex-start !important;
+  align-self: start !important;
+  height: auto !important;
+  max-height: 100%;
+  min-height: 0;
+}
+
+.region.middle.center .CX3 .event .headline,
+.CX3 .event .headline {
+  display: grid !important;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: start !important;
+  justify-content: start !important;
+  column-gap: 0.3em;
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  white-space: normal !important;
+}
+
+.region.middle.center .CX3 .event .headline .symbol,
+.CX3 .event .headline .symbol {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.region.middle.center .CX3 .event .headline .time.startTime,
+.CX3 .event .headline .time.startTime {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.region.middle.center .CX3 .event .headline .time.endTime,
+.CX3 .event .time.endTime {
+  display: none !important;
+}
+
+.region.middle.center .CX3 .event .headline .title,
+.CX3 .event .headline .title {
+  white-space: normal !important;
+  overflow: hidden !important;
+  text-overflow: unset !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: clamp(12px, 0.8vw + 0.55vh, 30px) !important;
+  font-weight: 650;
+  line-height: 1.2;
+  max-height: calc(1.2em * 2);
+  width: 100%;
+  padding-left: 0 !important;
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.region.middle.center .CX3 .event .headline .time,
+.CX3 .event .time {
+  font-size: clamp(10px, 0.65vw + 0.4vh, 22px) !important;
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* Today pill stays inside the date header, not over the events. */
+.region.middle.center .CX3 .today .cellDate,
+.CX3 .today .cellDate {
+  font-size: clamp(0.85rem, 1.5vw, 2rem) !important;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 
 /* Agenda: official module caps width at 400px and fades the top of the list.
  * Override so Today is readable from 720p to a 100-inch 4K panel. */
@@ -378,4 +468,104 @@ body {
       "stack"
       "status";
   }
+}
+
+
+/* App-store board: only selected installed apps. Hidden when that slot is empty. */
+.mmm-node--board {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.mmm-node__board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--node-gap);
+  height: 100%;
+  min-height: 0;
+}
+
+.mmm-node__board .mmm-node-card {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.module:has(.mmm-node--empty) {
+  display: none !important;
+}
+
+/* When no stack apps are selected, the calendar uses the full width. */
+body.mmm-node-stack-empty {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "hero"
+    "cal"
+    "status";
+}
+
+.region.bottom.left:has(.mmm-node--board) {
+  flex: 1 1 0;
+}
+
+/* Larger glanceable type on all section cards, fluid from 720p to 4K. */
+.region.lower.third .module-header,
+.region.bottom.bar .module-header {
+  font-size: clamp(0.85rem, 0.7vw + 0.55vh, 1.7rem);
+}
+
+.mmm-node-card__title {
+  font-size: clamp(0.9rem, 0.85vw + 0.55vh, 1.8rem) !important;
+}
+
+.mmm-node-card__status,
+.mmm-node__muted {
+  font-size: clamp(0.8rem, 0.7vw + 0.45vh, 1.5rem) !important;
+}
+
+.mmm-node__empty,
+.mmm-node__alert-title,
+.mmm-node__alert,
+.mmm-node__status-line,
+.mmm-node__next {
+  font-size: clamp(1.05rem, 1.15vw + 0.7vh, 2.6rem) !important;
+}
+
+.mmm-node__action {
+  font-size: clamp(0.85rem, 0.75vw + 0.45vh, 1.6rem) !important;
+  padding: 0.25em 0.8em;
+}
+
+/* Keep App Store cards readable when they share the stack with Today. */
+.region.lower.third .module.MMM-CalendarExt3Agenda {
+  flex: 0.9 1 0;
+  min-height: 0;
+  max-height: 42%;
+}
+
+.region.lower.third .module.mmm-node-board-slot,
+.region.lower.third .mmm-node-board-slot {
+  flex: 1.4 1 0;
+  min-height: 36%;
+}
+
+.mmm-node__board .mmm-node-card {
+  min-height: 7.5rem;
+  overflow: hidden;
+}
+
+.region.bottom.bar,
+.region.bottom.left,
+.region.bottom.center,
+.region.bottom.right {
+  min-height: clamp(5.5rem, 13vh, 11rem);
+  flex-shrink: 0;
+}
+
+.region.bottom.bar {
+  overflow: visible;
+}
+
+html, body {
+  overflow: hidden;
 }

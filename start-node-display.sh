@@ -12,5 +12,5 @@ if [[ ! -d node_modules/express ]]; then
   echo "Installing MagicMirror production dependencies…"
   npm run install-mm
 fi
-echo "MagicMirror NODE display on http://${MM_ADDRESS}:${MM_PORT}  (NODE_URL=${NODE_URL}  NODE_DEMO_CALENDAR=${NODE_DEMO_CALENDAR:-0})"
+echo "MagicMirror NODE display on http://${MM_ADDRESS}:${MM_PORT}  (NODE_URL=${NODE_URL}  NODE_APP_STORE_URL=${NODE_APP_STORE_URL:-}  NODE_DEMO_CALENDAR=${NODE_DEMO_CALENDAR:-0})"
 exec npm run server

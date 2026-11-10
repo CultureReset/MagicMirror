@@ -1,8 +1,10 @@
 Module.register("MMM-NODE", {
 	defaults: {
 		nodeUrl: null,
+		appStoreUrl: null,
 		updateInterval: 15000,
 		kind: "hub",
+		slot: null,
 		maxAgents: 6,
 		maxAlerts: 4,
 		maxApps: 8,
@@ -24,6 +26,7 @@ Module.register("MMM-NODE", {
 		this.applyWallpaper();
 		this.sendSocketNotification("MMM_NODE_START", {
 			nodeUrl: this.config.nodeUrl || null,
+			appStoreUrl: this.config.appStoreUrl || null,
 			updateInterval: this.config.updateInterval,
 			endpoints: this.config.endpoints,
 			demoCalendar: this.config.demoCalendar
@@ -108,29 +111,115 @@ Module.register("MMM-NODE", {
 			root.innerHTML = "<div class=\"mmm-node__status mmm-node__status--down\">NODE unreachable</div>";
 			return root;
 		}
-		if (kind === "hub") {
-			root.classList.add("mmm-node--hub");
-			root.appendChild(this.healthStrip(snapshot));
-			if (snapshot.demoCalendar) {
-				const badge = document.createElement("div");
-				badge.className = "mmm-node__demo";
-				badge.textContent = "Demo calendar on — labeled Demo events, not live NODE events";
-				root.appendChild(badge);
+		if (kind === "board" || kind === "hub") {
+			root.classList.add(kind === "hub" ? "mmm-node--hub" : "mmm-node--board");
+			if (kind === "hub") root.appendChild(this.healthStrip(snapshot));
+			const cards = this.selectedCards(snapshot);
+			if (this.config.slot === "stack" || kind === "hub" || !this.config.slot) {
+				document.body.classList.toggle("mmm-node-stack-empty", cards.length === 0);
+			}
+			if (this.config.slot === "status") {
+				document.body.classList.toggle("mmm-node-status-empty", cards.length === 0);
+			}
+			if (!cards.length) {
+				root.classList.add("mmm-node--empty");
+				return root;
 			}
 			const grid = document.createElement("div");
-			grid.className = "mmm-node__grid";
-			for (const name of [
-				"agents", "workflows", "approvals", "activity",
-				"chores", "meals", "lists", "pantry",
-				"profiles", "photos", "rewards", "apps"
-			]) {
-				grid.appendChild(this.renderCard(name, snapshot, true));
-			}
+			grid.className = kind === "hub" ? "mmm-node__grid" : "mmm-node__board";
+			for (const item of cards) grid.appendChild(this.renderStoreCard(item));
 			root.appendChild(grid);
+			return root;
+		}
+		// A leftover single-kind instance only paints if that app is installed and selected.
+		const selected = this.selectedCards(snapshot).find((item) => item.id === kind || item.display?.cardKind === kind);
+		if (["meals", "chores", "approvals", "alerts", "lists", "pantry", "rewards"].includes(kind) && !selected) {
+			root.classList.add("mmm-node--empty");
+			return root;
+		}
+		if (selected) {
+			root.appendChild(this.renderStoreCard(selected, false));
 			return root;
 		}
 		root.appendChild(this.renderCard(kind, snapshot, false));
 		return root;
+	},
+
+	selectedCards (snapshot) {
+		const items = Array.isArray(snapshot.displayCards) ? snapshot.displayCards : [];
+		const slot = this.config.slot;
+		return items.filter((item) => {
+			if (!item || !item.id) return false;
+			if (slot && item.slot && item.slot !== slot) return false;
+			return true;
+		});
+	},
+
+	renderStoreCard (item, chrome = true) {
+		const card = item.card || {};
+		const kind = (item.display && item.display.cardKind) || item.id || "app";
+		const title = item.name || card.title || item.id;
+		const status = card.status || "";
+		if (!chrome) return this.bodyStoreCard(card);
+		const shell = this.cardShell(kind, title, status);
+		shell.appendChild(this.bodyStoreCard(card));
+		return shell;
+	},
+
+	bodyStoreCard (card) {
+		const wrap = document.createElement("div");
+		const lines = Array.isArray(card?.lines) ? card.lines : [];
+		if (!card || (card.ok === false && !lines.length && !card.next)) {
+			wrap.appendChild(this.bodyEmpty(card?.empty || card?.status || "Unavailable"));
+			return wrap;
+		}
+		if (card.next && card.next.title) {
+			const line = document.createElement("div");
+			line.className = "mmm-node__status-line";
+			line.textContent = card.status || "";
+			if (card.status) wrap.appendChild(line);
+			const next = document.createElement("div");
+			next.className = "mmm-node__next";
+			next.textContent = card.next.title;
+			wrap.appendChild(next);
+		} else if (!lines.length) {
+			wrap.appendChild(this.bodyEmpty(card.empty || card.status || "Empty"));
+			if (card.hint) {
+				const hint = document.createElement("div");
+				hint.className = "mmm-node__muted";
+				hint.textContent = card.hint;
+				wrap.appendChild(hint);
+			}
+			return wrap;
+		} else if (!card.next) {
+			for (const row of lines.slice(0, 8)) {
+				const el = document.createElement("div");
+				el.className = "mmm-node__alert";
+				const title = document.createElement("div");
+				title.className = "mmm-node__alert-title";
+				title.textContent = row.title || "";
+				el.appendChild(title);
+				if (row.meta) {
+					const meta = document.createElement("div");
+					meta.className = "mmm-node__muted";
+					meta.textContent = row.meta;
+					el.appendChild(meta);
+				}
+				wrap.appendChild(el);
+			}
+		}
+		if (Array.isArray(card.actions) && card.actions.length) {
+			const actions = document.createElement("div");
+			actions.className = "mmm-node__actions";
+			for (const label of card.actions) {
+				const btn = document.createElement("span");
+				btn.className = "mmm-node__action";
+				btn.textContent = label;
+				actions.appendChild(btn);
+			}
+			wrap.appendChild(actions);
+		}
+		return wrap;
 	},
 
 	healthStrip (snapshot) {

@@ -82,7 +82,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  font-size: clamp(0.68rem, 1.25vmin, 1.05rem);
+  font-size: clamp(0.9rem, 0.85vw + 0.55vh, 1.8rem);
 }
 
 .mmm-node-card__status,
@@ -94,7 +94,7 @@
 
 .mmm-node-card__status {
   white-space: nowrap;
-  font-size: clamp(0.64rem, 1.15vmin, 0.95rem);
+  font-size: clamp(0.8rem, 0.7vw + 0.45vh, 1.5rem);
 }
 
 .mmm-node__list,
@@ -107,7 +107,7 @@
 
 .mmm-node__empty {
   color: rgba(255, 255, 255, 0.7);
-  font-size: clamp(0.9rem, 1.7vmin, 1.35rem);
+  font-size: clamp(1.05rem, 1.15vw + 0.7vh, 2.6rem);
   line-height: 1.25;
 }
 
@@ -118,7 +118,7 @@
   align-items: baseline;
   gap: 0.6em;
   padding: 0.12em 0;
-  font-size: clamp(0.86rem, 1.55vmin, 1.25rem);
+  font-size: clamp(1.05rem, 1.15vw + 0.7vh, 2.4rem);
 }
 
 .mmm-node__alert {
@@ -224,7 +224,7 @@
 .mmm-node__status-line,
 .mmm-node__next {
   color: #fff;
-  font-size: clamp(1.05rem, 2.1vmin, 2.2rem);
+  font-size: clamp(1.15rem, 1.2vw + 0.8vh, 2.8rem);
   line-height: 1.25;
   font-weight: 600;
 }
@@ -247,7 +247,7 @@
   padding: 0.18em 0.7em;
   color: #fff;
   letter-spacing: 0.04em;
-  font-size: clamp(0.72rem, 1.3vmin, 1.05rem);
+  font-size: clamp(0.85rem, 0.75vw + 0.45vh, 1.6rem);
   white-space: nowrap;
 }
 
@@ -269,4 +269,32 @@
   font-weight: 650;
   line-height: 1.05;
   letter-spacing: 0.02em;
+}
+
+
+.mmm-node--board,
+.mmm-node--empty {
+  width: 100%;
+}
+
+.mmm-node__board {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.15vmin, 20px);
+  height: 100%;
+  min-height: 0;
+}
+
+.mmm-node__board .mmm-node-card {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.mmm-node__alert-title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow-wrap: anywhere;
 }
