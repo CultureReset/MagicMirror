@@ -1,3 +1,14 @@
+> **CultureReset fork of [MagicMirrorOrg/MagicMirror](https://github.com/MagicMirrorOrg/MagicMirror).** MagicMirror² is an open source modular smart mirror platform. With a growing list of installable modules, the MagicMirror² allows you to convert your hallway or bathroom mirror into your personal assistant.
+>
+> - **Why it is here:** The base for the NODE TV board. Branch `feat/node-display-20261109` adds a large calendar and App Store cards for the family display.
+> - **Does anything run from it:** `master` is upstream. The TV board branch is built and tested but is not the live screen yet.
+> - **Changes:** The default branch has no CultureReset commits; it is upstream as of the last sync.
+> - **License:** MIT, from upstream. For updates and issues, use [upstream](https://github.com/MagicMirrorOrg/MagicMirror).
+>
+> The upstream README follows unchanged.
+
+---
+
 # ![MagicMirror²: The open source modular smart mirror platform.](.github/header.png)
 
 <p style="text-align: center">
